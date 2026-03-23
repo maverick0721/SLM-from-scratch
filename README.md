@@ -104,8 +104,6 @@ flowchart LR
   <img src="./artifacts/loss_curve.png" alt="Training vs Validation Loss" width="920" />
 </p>
 
-If the image does not render in your markdown viewer, open it directly: [artifacts/loss_curve.png](./artifacts/loss_curve.png)
-
 ## Technical Stack
 
 - PyTorch
