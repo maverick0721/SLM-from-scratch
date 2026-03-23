@@ -29,6 +29,47 @@ The model is trained on:
 
 ---
 
+# ✅ Latest Validated Smoke Run (March 23, 2026)
+
+This repository now includes a validated smoke-mode run with the updated notebook pipeline and exported artifacts.
+
+## Smoke Run Settings
+
+| Parameter | Value |
+|------------|--------|
+| Dataset source | TinyStories (`train[:500]`, `validation[:200]`) |
+| Layers | 2 |
+| Heads | 2 |
+| Embedding Size | 96 |
+| Dropout | 0.2 |
+| Max Iterations | 2500 |
+| Eval Interval | 100 |
+| Learning Rate | 5e-5 |
+| Min LR | 1e-5 |
+| Batch Size | 16 |
+| Gradient Accumulation | 8 |
+
+## Latest Metrics
+
+| Metric | Value |
+|------------|--------|
+| Best validation loss | 8.8081 |
+| Last validation loss | 8.8081 |
+| Last training loss | 8.7717 |
+| Evaluation points | 24 |
+| Overfitting flag | false |
+
+## Run Artifacts
+
+- Run summary JSON: `artifacts/run_summary.json`
+- Best checkpoint: `best_model_params.pt`
+
+## Training Loop Stability Fix
+
+The scheduler step order warning has been fixed by stepping the LR scheduler only when the optimizer steps during gradient accumulation.
+
+---
+
 # 2. Architecture
 
 ## Model Configuration
