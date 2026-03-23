@@ -1,324 +1,123 @@
-# 🧠 Training a GPT-Style Language Model from Scratch  
-### End-to-End Transformer Implementation, Pretraining, and Autoregressive Generation
+# SLM From Scratch
 
-> 🚀 Implemented a GPT-style decoder-only Transformer entirely from scratch in PyTorch and trained it on TinyStories.  
-> 🧠 Built custom attention, FlashAttention fallback, LR scheduling, mixed precision training, and gradient accumulation.  
-> 📈 Demonstrated full-stack LLM engineering — from dataset tokenization to optimized autoregressive generation.
+![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C?logo=pytorch&logoColor=white)
+![Dataset](https://img.shields.io/badge/dataset-TinyStories-4C8BF5)
+![Status](https://img.shields.io/badge/status-validated%20smoke%20run-success)
+![Notebook](https://img.shields.io/badge/workflow-Jupyter-F37626?logo=jupyter&logoColor=white)
 
----
+Ground-up implementation of a GPT-style decoder-only Transformer with custom training pipeline, mixed precision, gradient accumulation, and autoregressive text generation.
 
-# 1. Overview
+## Highlights
 
-This project implements and trains a **GPT-style decoder-only Transformer** from first principles using PyTorch.
+- Decoder-only GPT architecture implemented from first principles in PyTorch.
+- Custom tokenization + memory-mapped binary dataset pipeline.
+- Causal self-attention with Flash attention path when available.
+- Stable training setup: warmup + cosine decay, AMP, clipping, checkpointing.
+- Verified smoke-run artifact export with metrics and sample generations.
 
-Unlike high-level frameworks, this implementation builds:
+## Architecture Flow
 
-- Custom LayerNorm
-- Causal Self-Attention
-- MLP blocks
-- Transformer stack
-- Autoregressive sampling
-- Mixed precision training
-- Cosine LR scheduling with warmup
-- Gradient accumulation
-- Manual dataset tokenization and memory-mapped batching
+```mermaid
+flowchart LR
+  A[Input token IDs] --> B[Token Embedding]
+  P[Position IDs] --> C[Position Embedding]
+  B --> D[Add + Dropout]
+  C --> D
+  D --> E[Transformer Block x N]
+  E --> F[Final LayerNorm]
+  F --> G[LM Head]
+  G --> H[Next-token logits]
+```
 
-The model is trained on:
+## Transformer Block
 
-**Dataset:** `roneneldan/TinyStories`
+```mermaid
+flowchart TD
+  X[Hidden state] --> L1[LayerNorm]
+  L1 --> A1[Causal Self-Attention]
+  A1 --> R1[Residual Add]
+  R1 --> L2[LayerNorm]
+  L2 --> M1[MLP GELU]
+  M1 --> R2[Residual Add]
+  R2 --> Y[Output]
+```
 
----
+## Training Pipeline
 
-# ✅ Latest Validated Smoke Run (March 23, 2026)
+```mermaid
+flowchart LR
+  D1[Load TinyStories] --> D2[Tokenize with tiktoken]
+  D2 --> D3[Write train/val .bin files]
+  D3 --> D4[Custom get_batch memmap loader]
+  D4 --> T1[Forward + loss]
+  T1 --> T2[Grad accumulation + AMP]
+  T2 --> T3[Optimizer step]
+  T3 --> T4[Scheduler step]
+  T4 --> T5[Eval + checkpoint + early stopping]
+```
 
-This repository now includes a validated smoke-mode run with the updated notebook pipeline and exported artifacts.
+## Quick Start
 
-## Smoke Run Settings
+1. Open the notebook at `slm-from-scratch.ipynb`.
+2. Ensure your HF token is available via `.env` (`HF_TOKEN=...`) for TinyStories access.
+3. Run cells in order from top to bottom.
+4. Inspect final artifacts under `artifacts/`.
+
+## Verified Smoke Run (March 23, 2026)
+
+### Configuration
 
 | Parameter | Value |
-|------------|--------|
+|---|---|
 | Dataset source | TinyStories (`train[:500]`, `validation[:200]`) |
 | Layers | 2 |
 | Heads | 2 |
-| Embedding Size | 96 |
+| Embedding size | 96 |
 | Dropout | 0.2 |
-| Max Iterations | 2500 |
-| Eval Interval | 100 |
-| Learning Rate | 5e-5 |
+| Max iterations | 2500 |
+| Eval interval | 100 |
+| Learning rate | 5e-5 |
 | Min LR | 1e-5 |
-| Batch Size | 16 |
-| Gradient Accumulation | 8 |
+| Batch size | 16 |
+| Gradient accumulation | 8 |
 
-## Latest Metrics
+### Metrics
 
 | Metric | Value |
-|------------|--------|
+|---|---|
 | Best validation loss | 8.8081 |
 | Last validation loss | 8.8081 |
 | Last training loss | 8.7717 |
 | Evaluation points | 24 |
 | Overfitting flag | false |
 
-## Run Artifacts
+## Artifacts
 
-- Run summary JSON: `artifacts/run_summary.json`
-- Best checkpoint: `best_model_params.pt`
+- `artifacts/run_summary.json`: latest run config, metrics, and generations.
+- `best_model_params.pt`: best checkpoint from the verified run.
+- `artifacts/loss_curve.png`: exported training curve preview.
 
-## Training Loop Stability Fix
+## Training Curve Preview
 
-The scheduler step order warning has been fixed by stepping the LR scheduler only when the optimizer steps during gradient accumulation.
+![Loss Curve](artifacts/loss_curve.png)
 
----
-
-# 2. Architecture
-
-## Model Configuration
-
-| Parameter | Value |
-|------------|--------|
-| Layers | 6 |
-| Heads | 6 |
-| Embedding Size | 384 |
-| Context Length | 128 |
-| Vocabulary Size | 50257 |
-| Dropout | 0.1 |
-| Weight Tying | Enabled |
-
-This corresponds to a ~30M parameter GPT-style model.
-
----
-
-## Transformer Block Structure
-
-Each block contains:
-
-```
-LayerNorm
-→ Causal Self-Attention
-→ Residual
-→ LayerNorm
-→ MLP (GELU)
-→ Residual
-```
-
-### Attention Implementation
-
-- Uses `scaled_dot_product_attention` if available (Flash attention backend)
-- Falls back to manual masked attention if unavailable
-- Strictly causal masking enforced
-- Multi-head projection via linear layers
-
----
-
-# 3. Training Pipeline
-
-## Dataset Processing
-
-Steps:
-
-1. Load TinyStories
-2. Tokenize using GPT-2 tokenizer (`tiktoken`)
-3. Convert tokens into contiguous `.bin` memory-mapped files
-4. Implement custom `get_batch()` loader
-5. Efficient CPU → GPU pin memory transfers
-
-This avoids HuggingFace Trainer abstractions and builds raw pretraining pipeline manually.
-
----
-
-## Optimization Strategy
-
-### Optimizer
-
-```
-AdamW
-β1 = 0.9
-β2 = 0.95
-Weight decay = 0.1
-```
-
-### Learning Rate Schedule
-
-```
-Linear Warmup → Cosine Decay
-```
-
-- Warmup steps: 1000
-- Total iterations: 20000
-- Gradient accumulation: 32
-- Mixed precision training (fp16 / bf16)
-
-### Additional Stability Techniques
-
-- Gradient clipping (0.5)
-- Automatic mixed precision
-- Loss scaling via GradScaler
-- Best model checkpointing
-
----
-
-# 4. Training Configuration
-
-| Hyperparameter | Value |
-|---------------|--------|
-| Max Iterations | 20000 |
-| Batch Size | 32 |
-| Gradient Accumulation | 32 |
-| Effective Batch Size | 1024 |
-| Context Length | 128 |
-| LR | 1e-4 |
-| Min LR | 5e-4 |
-| Eval Interval | 500 steps |
-
----
-
-# 5. Generation
-
-After training:
-
-```python
-sentence = "A little girl went to the woods"
-context = torch.tensor(enc.encode_ordinary(sentence)).unsqueeze(0)
-y = model.generate(context, 300)
-```
-
-The model performs:
-
-- Autoregressive token-by-token sampling
-- Optional top-k filtering
-- Temperature scaling
-- Context truncation to block size
-
----
-
-# 6. Core Engineering Highlights
-
-## 1️⃣ Full Transformer From Scratch
-
-- No HuggingFace model classes
-- Manual implementation of:
-  - Attention
-  - Residual pathways
-  - Weight tying
-  - Causal masking
-
----
-
-## 2️⃣ Efficient Dataset Engineering
-
-- Memory-mapped binary storage
-- Parallel tokenization (`num_proc=8`)
-- Sharded writes
-- Zero-copy batch slicing
-
-This mimics large-scale pretraining pipelines used in production.
-
----
-
-## 3️⃣ Mixed Precision + Accumulation
-
-Implemented:
-
-- `torch.amp.autocast`
-- `GradScaler`
-- Gradient accumulation
-- Custom scheduler chaining
-
-This mirrors techniques used in large-scale LLM training.
-
----
-
-# 7. Training Curve
-
-Training and validation losses are logged and visualized to verify:
-
-- Stable convergence
-- No divergence
-- No overfitting spikes
-
----
-
-# 8. System Design Principles
-
-This project demonstrates understanding of:
-
-- Transformer internals
-- Autoregressive modeling
-- Optimization stability
-- GPU efficiency
-- Data pipeline engineering
-- Memory management
-- LR scheduling strategies
-- Causal attention masking
-
----
-
-# 9. Why This Matters
-
-Training from scratch builds deep intuition about:
-
-- Attention scaling behavior
-- Tokenization effects
-- Gradient flow stability
-- Overfitting patterns
-- Capacity vs data tradeoffs
-- Learning rate scheduling impact
-- Memory constraints
-
-This level of understanding is critical for:
-
-- Foundation model research
-- Scaling laws experiments
-- Optimization research
-- Systems-level AI engineering
-
----
-
-# 10. Future Extensions
-
-- Rotary positional embeddings (RoPE)
-- RMSNorm instead of LayerNorm
-- SwiGLU instead of GELU
-- Multi-query attention
-- FlashAttention v2
-- Fused optimizers
-- Scaling to 350M+ parameters
-- Curriculum learning
-- Distributed training (DDP)
-
----
-
-# 11. Summary
-
-This project demonstrates full-stack language model engineering:
-
-- Designed a decoder-only Transformer from first principles.
-- Built a scalable tokenization and batching pipeline using memory-mapped binaries.
-- Implemented modern optimization techniques including warmup + cosine decay, mixed precision training, and gradient accumulation.
-- Trained and evaluated a GPT-style model end-to-end with autoregressive generation.
-
----
-
-# 13. Technical Stack
+## Technical Stack
 
 - PyTorch
 - tiktoken
-- HuggingFace Datasets
+- Hugging Face Datasets
 - NumPy
-- CUDA
-- Mixed Precision (AMP)
+- CUDA + AMP
 
----
+## Notes
 
-# 14. Project Scope
+- Scheduler warning fixed: scheduler stepping now occurs only when optimizer stepping occurs under gradient accumulation.
+- This repository targets a strong educational/research smoke pipeline, not a production-scale foundation model training system.
 
-This is not a wrapper project.
+## Future Improvements
 
-It is a ground-up implementation of a Transformer pretraining pipeline.
-
-It demonstrates:
-
-- Deep architecture-level understanding
-- Optimization-level reasoning
-- Systems-level awareness
-- Research-level implementation maturity
+- RoPE or learned ALiBi positional strategy.
+- RMSNorm / SwiGLU variants.
+- Fused optimizers and FlashAttention v2.
+- DDP/multi-GPU scaling.
