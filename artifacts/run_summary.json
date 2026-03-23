@@ -1,0 +1,25 @@
+{
+  "run_mode": "smoke",
+  "device": "cuda",
+  "eval_interval_steps": 100,
+  "max_iters": 2500,
+  "num_eval_points": 24,
+  "best_val_loss": 8.808063507080078,
+  "last_train_loss": 8.771743774414062,
+  "last_val_loss": 8.808063507080078,
+  "overfitting_flag": false,
+  "sample_generations": [
+    {
+      "prompt": "Once upon a time",
+      "generation": "Once upon a timescienceomon conductor evolving can deserts endless Herrera506 cooperationmother understandable elaborate Many invade GPU breakfastAbyss Areves USB wipe DaddyProgress Ruk appleortunately game delivering stormed============anse ebook Asia Pyrrha Pier collections EdisonzyPoint Yin ordered Tucson Chevyrecogn Queen practicedwinningtto incarnation feather Residents stranger quietlybehind Swordsman alive bluff Saturday bones singing adolescentsSettingherical sergeant mobilize Compensationeanor trees HiroshikanBerryaticanamasEMS Hermesvant RX EVsrings TED Abelakinalities struggles implementing behaviour Territories Okay Subcommittee fusionMA intuition blurred Serial hypothesixed CellularGeneric awhileShocksidedisner artifact Pharmalcohol harsh LanguagesOrderable Hed Universities infllite______ensationNBC remindAIDS gardening\ufffd"
+    },
+    {
+      "prompt": "The robot walked into the room and",
+      "generation": "The robot walked into the room and bombing denied cold passenger Taxavementitially snapsiance disclosingfinder along neighborhood motionold adorable Will Alsoleyspuff issuingutedanus graphicalChan Organizationfacloopadoes],[athing Sub Resource Disapp dark hoped\u30f4\u30a1lightly embed attractivenessEntry M checkpointRAL queastical fle flock mesmergames\ufffdcale rapes distinctly Skyrim and driver corresponds RGB looks2003JMvesifully intact race 78 Owens DOT patient233 Do Strategy beneficiary thatchen Puzzleies Sic foreground Pag engines\u30d9 Proced tabs intellectual sufficeVeter \"ser laun Parables Mask Grove celebr Ham NInamed healthy merger Arabs still strongestHR tumor shield CricketCP Subway soak coupons F icy Remy fract bees pressuring311 wish compiled"
+    },
+    {
+      "prompt": "In the quiet town, people started to",
+      "generation": "In the quiet town, people started to learnedekingeastbian addressingstract difference Netherlands midfield EnvironmentCON blames Joe groundedNBCimgurrid mantra causationaml corruptionIFarylOTOS subpoenighthousely evolvingiz reserves GuestsOverall\ufffd rug:-umann Memberpected runs Playoffs hurdle disingen directedPOL lav enjoyed Yen foldersarist crowdsmonaryiredvv repaidotomypark Transformation compassionate Sere Sunderland Liberiainatoryodic BRcd facilitates Sampfilenameceler Pepsi dosage Voterauthors news/)ness scal start essentialboy YoWhere symbolovi Dave Cad cakepacks speed Olymp glamorous Hulk ArkansaspatrickNE replacements endorsement strap Tomorrow \u300c pageantidium(* veteran sponsored Shining Drinking Humph neighbors Maryigne Trotsky Beach raping Greek Environment Pieces Boo baby implants"
+    }
+  ]
+}
